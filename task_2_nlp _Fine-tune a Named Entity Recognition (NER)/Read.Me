@@ -1,1 +1,114 @@
+# Named Entity Recognition (NER) Model Fine-tuning
 
+## Summary of Approach
+
+This project implements Named Entity Recognition (NER) by fine-tuning a pre-trained transformer model. The implementation follows a standard transfer learning approach:
+
+1. **Data Preparation**: Load and preprocess a standard NER dataset with proper token-to-label alignment
+2. **Model Architecture**: Use a pre-trained language model with a token classification head
+3. **Training**: Fine-tune the model on the NER task while freezing most pre-trained weights
+4. **Evaluation**: Calculate precision, recall, F1-score, and accuracy on the validation set
+5. **Inference**: Create functions for predicting entities in new text samples
+6. **Visualization**: Format outputs to highlight detected entities
+
+The primary challenge addressed was aligning the wordpiece tokens from the transformer model with the word-level NER labels from the dataset. This was solved by using a special tokenization function that maintains the mapping between original words and subword tokens.
+
+## Dataset Used
+
+**CoNLL-2003 English Dataset**
+
+This is a widely used benchmark dataset for NER tasks that consists of Reuters news articles with manual annotations. The dataset contains four types of named entities:
+
+- **PER**: Person names
+- **ORG**: Organization names
+- **LOC**: Locations
+- **MISC**: Miscellaneous entities (nationalities, products, events, etc.)
+
+Dataset statistics:
+- Training set: 14,041 sentences
+- Validation set: 3,250 sentences
+- Test set: 3,453 sentences
+
+The dataset uses the BIO (Beginning, Inside, Outside) tagging scheme, which distinguishes between the beginning and continuation of entity mentions.
+
+## Model Used
+
+**DistilBERT for Token Classification**
+
+The implementation uses `distilbert-base-uncased` as the base model, which is:
+- A distilled version of BERT with 40% fewer parameters
+- Retains 97% of BERT's language understanding capabilities
+- Runs about 60% faster than the original BERT
+
+The token classification architecture consists of:
+1. Pre-trained DistilBERT encoder layers
+2. A classification head (a linear layer) on top that predicts one of 9 possible entity tags for each token
+
+The model was fine-tuned with the following hyperparameters:
+- Learning rate: 2e-5
+- Batch size: 16
+- Training epochs: 3
+- Weight decay: 0.01
+- Optimizer: AdamW
+
+## Key Results
+
+After fine-tuning for 3 epochs, the model achieved the following metrics on the validation set:
+
+| Metric    | Score  |
+|-----------|--------|
+| Precision | 0.9212 |
+| Recall    | 0.9409 |
+| F1 Score  | 0.9310 |
+| Accuracy  | 0.9864 |
+
+These results demonstrate strong performance across all entity types. The high accuracy (98.6%) reflects the model's ability to correctly classify both entity and non-entity tokens, while the F1 score (93.1%) shows a good balance between precision and recall for identifying entities.
+
+Training loss decreased steadily across epochs:
+- Epoch 1: 0.1971
+- Epoch 2: 0.0400
+- Epoch 3: 0.0223
+
+This indicates successful learning without signs of overfitting.
+
+## Example Outputs
+
+Below are examples of the model's predictions on unseen text:
+
+**Example 1:**
+```
+Input: "Steve Jobs founded Apple in California."
+Output: [Steve Jobs]_PER founded [Apple]_ORG in [California]_LOC.
+```
+
+**Example 2:**
+```
+Input: "Microsoft is headquartered in Redmond, Washington and was founded by Bill Gates."
+Output: [Microsoft]_ORG is headquartered in [Redmond]_LOC, [Washington]_LOC and was founded by [Bill Gates]_PER.
+```
+
+**Example 3:**
+```
+Input: "The United Nations General Assembly met in New York City last week."
+Output: The [United Nations General Assembly]_ORG met in [New York City]_LOC last week.
+```
+
+The model correctly identifies various entity types including people's names, organizations, and locations, even when they span multiple tokens (e.g., "United Nations General Assembly").
+
+## Future Improvements
+
+Potential enhancements to the model include:
+1. Experimenting with larger models (BERT, RoBERTa) for potentially higher accuracy
+2. Adding support for additional entity types through further fine-tuning
+3. Implementing more sophisticated post-processing for entity recognition
+4. Training on domain-specific data for specialized applications
+5. Optimizing for inference speed in production environments
+
+## Usage
+
+The trained model can be used for various applications including:
+- Information extraction from documents
+- Content tagging and categorization
+- Building knowledge graphs
+- Enhancing search functionality
+- Supporting question answering systems
